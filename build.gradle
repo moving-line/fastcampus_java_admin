@@ -18,6 +18,9 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
     compile('mysql:mysql-connector-java')
     compile('org.projectlombok:lombok')
+//    For Mac_mini
+//    compileOnly 'org.projectlombok:lombok:1.18.8'
+//    annotationProcessor 'org.projectlombok:lombok:1.18.8'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 }
