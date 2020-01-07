@@ -1,13 +1,10 @@
 package com.example.study.service;
 
-import com.example.study.ifs.CrudInterface;
 import com.example.study.model.entity.OrderGroup;
 import com.example.study.model.network.Header;
 import com.example.study.model.network.request.OrderGroupApiRequest;
 import com.example.study.model.network.response.OrderGroupApiResponse;
-import com.example.study.repository.OrderGroupRepository;
 import com.example.study.repository.UserRepository;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-public class OrderGroupApiLogicService implements CrudInterface<OrderGroupApiRequest, OrderGroupApiResponse> {
-
-    @Autowired
-    private OrderGroupRepository orderGroupRepository;
+public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest, OrderGroupApiResponse, OrderGroup> {
 
     @Autowired
     private UserRepository userRepository;
@@ -39,7 +33,7 @@ public class OrderGroupApiLogicService implements CrudInterface<OrderGroupApiReq
                 .arrivalDate(body.getArrivalDate())
                 .user(userRepository.getOne(body.getUserId()))
                 .build();
-        OrderGroup newOrderGroup = orderGroupRepository.save(orderGroup);
+        OrderGroup newOrderGroup = baseRepository.save(orderGroup);
 
         return response(newOrderGroup);
     }
@@ -47,7 +41,7 @@ public class OrderGroupApiLogicService implements CrudInterface<OrderGroupApiReq
     @Override
     public Header<OrderGroupApiResponse> read(long id) {
 
-        Optional<OrderGroup> optionalOrderGroup = orderGroupRepository.findById(id);
+        Optional<OrderGroup> optionalOrderGroup = baseRepository.findById(id);
 
         return optionalOrderGroup
                 .map(this::response)
@@ -58,7 +52,7 @@ public class OrderGroupApiLogicService implements CrudInterface<OrderGroupApiReq
     public Header<OrderGroupApiResponse> update(Header<OrderGroupApiRequest> request) {
 
         OrderGroupApiRequest body = request.getData();
-        Optional<OrderGroup> optionalOrderGroup = orderGroupRepository.findById(body.getId());
+        Optional<OrderGroup> optionalOrderGroup = baseRepository.findById(body.getId());
 
         return optionalOrderGroup
                 .map(orderGroup -> orderGroup
@@ -71,18 +65,18 @@ public class OrderGroupApiLogicService implements CrudInterface<OrderGroupApiReq
                         .setTotalPrice(body.getTotalPrice())
                         .setOrderAt(body.getOrderAt())
                         .setArrivalDate(body.getArrivalDate()))
-                .map(updatedOrderGroup -> orderGroupRepository.save(updatedOrderGroup))
+                .map(updatedOrderGroup -> baseRepository.save(updatedOrderGroup))
                 .map(this::response)
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
     @Override
     public Header delete(long id) {
-        Optional<OrderGroup> optionalOrderGroup = orderGroupRepository.findById(id);
+        Optional<OrderGroup> optionalOrderGroup = baseRepository.findById(id);
 
         return optionalOrderGroup
                 .map(orderGroup -> {
-                    orderGroupRepository.delete(orderGroup);
+                    baseRepository.delete(orderGroup);
                     return Header.OK();
                 })
                 .orElseGet(() -> Header.ERROR("데이터 없음"));

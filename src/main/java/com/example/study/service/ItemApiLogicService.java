@@ -1,11 +1,9 @@
 package com.example.study.service;
 
-import com.example.study.ifs.CrudInterface;
 import com.example.study.model.entity.Item;
 import com.example.study.model.network.Header;
 import com.example.study.model.network.request.ItemApiRequest;
 import com.example.study.model.network.response.ItemApiResponse;
-import com.example.study.repository.ItemRepository;
 import com.example.study.repository.PartnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,10 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-public class ItemApiLogicService implements CrudInterface<ItemApiRequest, ItemApiResponse> {
-
-    @Autowired
-    private ItemRepository itemRepository;
+public class ItemApiLogicService extends BaseService<ItemApiRequest, ItemApiResponse, Item> {
 
     @Autowired
     private PartnerRepository partnerRepository;
@@ -37,14 +32,14 @@ public class ItemApiLogicService implements CrudInterface<ItemApiRequest, ItemAp
                 .registeredAt(LocalDateTime.now())
                 .partner(partnerRepository.getOne(body.getPartnerId()))
                 .build();
-        Item newItem = itemRepository.save(item);
+        Item newItem = baseRepository.save(item);
 
         return response(newItem);
     }
 
     @Override
     public Header<ItemApiResponse> read(long id) {
-        return itemRepository.findById(id)
+        return baseRepository.findById(id)
                 .map(this::response)
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
@@ -53,7 +48,7 @@ public class ItemApiLogicService implements CrudInterface<ItemApiRequest, ItemAp
     public Header<ItemApiResponse> update(Header<ItemApiRequest> request) {
 
         ItemApiRequest body = request.getData();
-        Optional<Item> optionalItem = itemRepository.findById(body.getId());
+        Optional<Item> optionalItem = baseRepository.findById(body.getId());
 
         return optionalItem
                 .map(item -> item
@@ -65,7 +60,7 @@ public class ItemApiLogicService implements CrudInterface<ItemApiRequest, ItemAp
                         .setBrandName(body.getBrandName())
                         .setRegisteredAt(body.getRegisteredAt())
                         .setUnregisteredAt(body.getUnregisteredAt()))
-                .map(item -> itemRepository.save(item))
+                .map(item -> baseRepository.save(item))
                 .map(this::response)
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
@@ -73,11 +68,11 @@ public class ItemApiLogicService implements CrudInterface<ItemApiRequest, ItemAp
     @Override
     public Header delete(long id) {
 
-        Optional<Item> optionalItem = itemRepository.findById(id);
+        Optional<Item> optionalItem = baseRepository.findById(id);
 
         return optionalItem
                 .map(item -> {
-                    itemRepository.delete(item);
+                    baseRepository.delete(item);
                     return Header.OK();
                 })
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
