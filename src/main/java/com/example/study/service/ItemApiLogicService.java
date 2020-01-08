@@ -6,16 +6,30 @@ import com.example.study.model.network.request.ItemApiRequest;
 import com.example.study.model.network.response.ItemApiResponse;
 import com.example.study.repository.PartnerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ItemApiLogicService extends BaseService<ItemApiRequest, ItemApiResponse, Item> {
 
     @Autowired
     private PartnerRepository partnerRepository;
+
+    @Override
+    public Header<List<ItemApiResponse>> search(Pageable pageable) {
+        Page<Item> items = baseRepository.findAll(pageable);
+        List<ItemApiResponse> itemApiResponseList = items.stream()
+                .map(this::response)
+                .collect(Collectors.toList());
+
+        return Header.OK(itemApiResponseList);
+    }
 
     @Override
     public Header<ItemApiResponse> create(Header<ItemApiRequest> request) {
@@ -34,13 +48,13 @@ public class ItemApiLogicService extends BaseService<ItemApiRequest, ItemApiResp
                 .build();
         Item newItem = baseRepository.save(item);
 
-        return response(newItem);
+        return Header.OK(response(newItem));
     }
 
     @Override
     public Header<ItemApiResponse> read(long id) {
         return baseRepository.findById(id)
-                .map(this::response)
+                .map(item -> Header.OK(response(item)))
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
@@ -60,8 +74,8 @@ public class ItemApiLogicService extends BaseService<ItemApiRequest, ItemApiResp
                         .setBrandName(body.getBrandName())
                         .setRegisteredAt(body.getRegisteredAt())
                         .setUnregisteredAt(body.getUnregisteredAt()))
-                .map(item -> baseRepository.save(item))
-                .map(this::response)
+                .map(updatedItem -> baseRepository.save(updatedItem))
+                .map(updatedItem -> Header.OK(response(updatedItem)))
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
@@ -79,9 +93,8 @@ public class ItemApiLogicService extends BaseService<ItemApiRequest, ItemApiResp
 
     }
 
-    private Header<ItemApiResponse> response(Item item) {
-
-        ItemApiResponse body = ItemApiResponse.builder()
+    private ItemApiResponse response(Item item) {
+        return ItemApiResponse.builder()
                 .id(item.getId())
                 .status(item.getStatus())
                 .name(item.getName())
@@ -94,7 +107,5 @@ public class ItemApiLogicService extends BaseService<ItemApiRequest, ItemApiResp
                 .unregisteredAt(item.getUnregisteredAt())
                 .partnerId(item.getPartner().getId())
                 .build();
-
-        return Header.OK(body);
     }
 }

@@ -6,16 +6,30 @@ import com.example.study.model.network.request.OrderGroupApiRequest;
 import com.example.study.model.network.response.OrderGroupApiResponse;
 import com.example.study.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest, OrderGroupApiResponse, OrderGroup> {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Override
+    public Header<List<OrderGroupApiResponse>> search(Pageable pageable) {
+        Page<OrderGroup> orderGroups = baseRepository.findAll(pageable);
+        List<OrderGroupApiResponse> orderGroupList = orderGroups.stream()
+                .map(this::response)
+                .collect(Collectors.toList());
+
+        return Header.OK(orderGroupList);
+    }
 
     @Override
     public Header<OrderGroupApiResponse> create(Header<OrderGroupApiRequest> request) {
@@ -35,7 +49,7 @@ public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest,
                 .build();
         OrderGroup newOrderGroup = baseRepository.save(orderGroup);
 
-        return response(newOrderGroup);
+        return Header.OK(response(newOrderGroup));
     }
 
     @Override
@@ -44,7 +58,7 @@ public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest,
         Optional<OrderGroup> optionalOrderGroup = baseRepository.findById(id);
 
         return optionalOrderGroup
-                .map(this::response)
+                .map(orderGroup -> Header.OK(response(orderGroup)))
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
@@ -66,7 +80,7 @@ public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest,
                         .setOrderAt(body.getOrderAt())
                         .setArrivalDate(body.getArrivalDate()))
                 .map(updatedOrderGroup -> baseRepository.save(updatedOrderGroup))
-                .map(this::response)
+                .map(updatedOrderGroup -> Header.OK(response(updatedOrderGroup)))
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
@@ -82,9 +96,8 @@ public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest,
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
-    private Header<OrderGroupApiResponse> response(OrderGroup orderGroup) {
-
-        OrderGroupApiResponse body = OrderGroupApiResponse.builder()
+    private OrderGroupApiResponse response(OrderGroup orderGroup) {
+        return OrderGroupApiResponse.builder()
                 .id((orderGroup.getId()))
                 .status(orderGroup.getStatus())
                 .orderType(orderGroup.getOrderType())
@@ -97,7 +110,5 @@ public class OrderGroupApiLogicService extends BaseService<OrderGroupApiRequest,
                 .arrivalDate(orderGroup.getArrivalDate())
                 .userId(orderGroup.getUser().getId())
                 .build();
-
-        return Header.OK(body);
     }
 }

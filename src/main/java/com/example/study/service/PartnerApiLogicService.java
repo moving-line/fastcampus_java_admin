@@ -6,15 +6,29 @@ import com.example.study.model.network.request.PartnerApiRequest;
 import com.example.study.model.network.response.PartnerApiResponse;
 import com.example.study.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PartnerApiLogicService extends BaseService<PartnerApiRequest, PartnerApiResponse, Partner> {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Override
+    public Header<List<PartnerApiResponse>> search(Pageable pageable) {
+        Page<Partner> partners = baseRepository.findAll(pageable);
+        List<PartnerApiResponse> partnerApiResponseList = partners.stream()
+                .map(this::response)
+                .collect(Collectors.toList());
+
+        return Header.OK(partnerApiResponseList);
+    }
 
     @Override
     public Header<PartnerApiResponse> create(Header<PartnerApiRequest> request) {
@@ -33,14 +47,14 @@ public class PartnerApiLogicService extends BaseService<PartnerApiRequest, Partn
                 .build();
         Partner newPartner = baseRepository.save(partner);
 
-        return response(newPartner);
+        return Header.OK(response(newPartner));
     }
 
     @Override
     public Header<PartnerApiResponse> read(long id) {
 
         return baseRepository.findById(id)
-                .map(this::response)
+                .map(partner -> Header.OK(response(partner)))
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
@@ -64,7 +78,7 @@ public class PartnerApiLogicService extends BaseService<PartnerApiRequest, Partn
                         .setCategory(categoryRepository.getOne(body.getCategoryId()))
                 )
                 .map(updatedPartner -> baseRepository.save(updatedPartner))
-                .map(this::response)
+                .map(updatedPartner -> Header.OK(response(updatedPartner)))
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
@@ -80,8 +94,8 @@ public class PartnerApiLogicService extends BaseService<PartnerApiRequest, Partn
                 .orElseGet(() -> Header.ERROR("데이터 없음"));
     }
 
-    private Header<PartnerApiResponse> response(Partner partner) {
-        PartnerApiResponse body = PartnerApiResponse.builder()
+    private PartnerApiResponse response(Partner partner) {
+        return PartnerApiResponse.builder()
                 .id(partner.getId())
                 .name(partner.getName())
                 .status(partner.getStatus())
@@ -94,7 +108,5 @@ public class PartnerApiLogicService extends BaseService<PartnerApiRequest, Partn
                 .unregisteredAt(partner.getUnregisteredAt())
                 .categoryId(partner.getCategory().getId())
                 .build();
-
-        return Header.OK(body);
     }
 }
