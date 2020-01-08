@@ -24,8 +24,8 @@ public class CategoryRepositoryTest extends StudyApplicationTests {
         Category category = new Category();
         category.setType(type);
         category.setType(title);
-        category.setCreatedAt(createdAt);
-        category.setCreatedBy(createdBy);
+//        category.setCreatedAt(createdAt);
+//        category.setCreatedBy(createdBy);
 
         Category newCategory = categoryRepository.save(category);
 
