@@ -29,7 +29,7 @@ public class OrderDetail {
 
     private LocalDateTime arrivalDate;
 
-    private int quantity;
+    private Integer quantity;
 
     private BigDecimal totalPrice;
 
